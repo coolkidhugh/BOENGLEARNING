@@ -98,7 +98,11 @@ def upload_word():
         # 保存图片
         image_filename = f"{uuid.uuid4()}{os.path.splitext(image_file.filename)[1]}"
         image_path = f"/static/uploads/{image_filename}"
-        image_file.save(os.path.join('src/static/uploads', image_filename))
+        
+        # 确保上传目录存在
+        upload_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'static/uploads')
+        os.makedirs(upload_dir, exist_ok=True)
+        image_file.save(os.path.join(upload_dir, image_filename))
         
         # 处理音频（可选）
         audio_path = None
@@ -106,7 +110,11 @@ def upload_word():
             audio_file = request.files['audio']
             audio_filename = f"{uuid.uuid4()}{os.path.splitext(audio_file.filename)[1]}"
             audio_path = f"/static/uploads/{audio_filename}"
-            audio_file.save(os.path.join('src/static/uploads', audio_filename))
+            
+            # 确保上传目录存在
+            upload_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'static/uploads')
+            os.makedirs(upload_dir, exist_ok=True)
+            audio_file.save(os.path.join(upload_dir, audio_filename))
         
         # 创建单词
         word = Word(
