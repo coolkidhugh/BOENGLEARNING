@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大橙子英文学习</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #FF8C00;
+            --secondary-color: #f8f9fc;
+            --accent-color: #f6c23e;
+            --success-color: #1cc88a;
+            --danger-color: #e74a3b;
+            --dark-color: #5a5c69;
+        }
+        
+        body {
+            font-family: 'Nunito', 'Segoe UI', Roboto, Arial, sans-serif;
+            background-color: #f8f9fc;
+        }
+        
+        .navbar {
+            background-color: white;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .sidebar {
+            min-height: calc(100vh - 56px);
+            background: linear-gradient(180deg, var(--primary-color) 10%, #E67300 100%);
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        }
+        
+        .sidebar-link {
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 600;
+            padding: 1rem;
+            border-radius: 0.35rem;
+            transition: all 0.2s;
+        }
+        
+        .sidebar-link:hover, .sidebar-link.active {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-link i {
+            margin-right: 0.5rem;
+        }
+        
+        .content {
+            padding: 1.5rem;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 0.35rem;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid #e3e6f0;
+            font-weight: 700;
+            color: var(--dark-color);
+        }
+        
+        .word-card {
+            transition: transform 0.2s;
+            cursor: pointer;
+            height: 100%;
+        }
+        
+        .word-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .word-image {
+            height: 150px;
+            object-fit: cover;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #E67300;
+            border-color: #E67300;
+        }
+        
+        .login-container, .register-container {
+            max-width: 450px;
+            margin: 2rem auto;
+        }
+        
+        .quiz-card {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .quiz-image {
+            max-height: 250px;
+            object-fit: contain;
+        }
+        
+        .upload-preview {
+            max-height: 200px;
+            max-width: 100%;
+            margin-top: 1rem;
+        }
+        
+        .audio-control {
+            width: 100%;
+        }
+        
+        .category-badge {
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 0.8rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+        }
+        
+        .result-card {
+            border-left: 4px solid;
+        }
+        
+        .result-card.correct {
+            border-left-color: var(--success-color);
+        }
+        
+        .result-card.incorrect {
+            border-left-color: var(--danger-color);
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                min-height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- 导航栏 -->
+        <nav class="navbar navbar-expand-lg navbar-light">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">大橙子英文学习</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item" v-if="!isLoggedIn">
+                            <a class="nav-link" href="#" @click="showLogin">登录</a>
+                        </li>
+                        <li class="nav-item" v-if="!isLoggedIn">
+                            <a class="nav-link" href="#" @click="showRegister">注册</a>
+                        </li>
+                        <li class="nav-item dropdown" v-if="isLoggedIn">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                                {{ currentUser.username }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="#" @click="logout">退出登录</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container-fluid">
+            <div class="row">
+                <!-- 侧边栏 -->
+                <div class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                    <div class="position-sticky pt-3">
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link sidebar-link" :class="{ active: currentPage === 'home' }" href="#" @click="changePage('home')">
+                                    <i class="bi bi-house-door"></i> 首页
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link sidebar-link" :class="{ active: currentPage === 'upload' }" href="#" @click="changePage('upload')">
+                                    <i class="bi bi-cloud-upload"></i> 上传单词
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link sidebar-link" :class="{ active: currentPage === 'mywords' }" href="#" @click="changePage('mywords')">
+                                    <i class="bi bi-journal-text"></i> 我的单词
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link sidebar-link" :class="{ active: currentPage === 'quiz' }" href="#" @click="changePage('quiz')">
+                                    <i class="bi bi-pencil-square"></i> 测验
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link sidebar-link" :class="{ active: currentPage === 'history' }" href="#" @click="changePage('history')">
+                                    <i class="bi bi-clock-history"></i> 测验历史
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 主内容区 -->
+                <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 content">
+                    <!-- 登录页面 -->
+                    <div v-if="currentPage === 'login'" class="login-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">用户登录</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-danger" v-if="loginError">{{ loginError }}</div>
+                                <form @submit.prevent="login">
+                                    <div class="mb-3">
+                                        <label for="username" class="form-label">用户名</label>
+                                        <input type="text" class="form-control" id="username" v-model="loginForm.username" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="password" class="form-label">密码</label>
+                                        <input type="password" class="form-control" id="password" v-model="loginForm.password" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100">登录</button>
+                                </form>
+                                <div class="text-center mt-3">
+                                    <p>还没有账号？ <a href="#" @click="showRegister">立即注册</a></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 注册页面 -->
+                    <div v-if="currentPage === 'register'" class="register-container">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">用户注册</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-danger" v-if="registerError">{{ registerError }}</div>
+                                <form @submit.prevent="register">
+                                    <div class="mb-3">
+                                        <label for="reg-username" class="form-label">用户名</label>
+                                        <input type="text" class="form-control" id="reg-username" v-model="registerForm.username" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="reg-email" class="form-label">邮箱</label>
+                                        <input type="email" class="form-control" id="reg-email" v-model="registerForm.email" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="reg-password" class="form-label">密码</label>
+                                        <input type="password" class="form-control" id="reg-password" v-model="registerForm.password" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="reg-confirm-password" class="form-label">确认密码</label>
+                                        <input type="password" class="form-control" id="reg-confirm-password" v-model="registerForm.confirmPassword" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100">注册</button>
+                                </form>
+                                <div class="text-center mt-3">
+                                    <p>已有账号？ <a href="#" @click="showLogin">立即登录</a></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 首页 -->
+                    <div v-if="currentPage === 'home'">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2>英语单词学习</h2>
+                            <div class="d-flex">
+                                <select class="form-select me-2" v-model="selectedCategory" @change="loadPresetWords">
+                                    <option value="">所有类别</option>
+                                    <option value="animals">动物</option>
+                                    <option value="food">食物</option>
+                                    <option value="daily">日常用品</option>
+                                    <option value="nature">自然</option>
+                                    <option value="transport">交通</option>
+                                </select>
+                                <button class="btn btn-outline-primary" @click="loadPresetWords">刷新</button>
+                            </div>
+                        </div>
+
+                        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+                            <div class="col" v-for="word in presetWords" :key="word.id">
+                                <div class="card word-card" @click="playAudio(word)">
+                                    <img :src="getImageUrl(word.image_path)" class="card-img-top word-image" :alt="word.english">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ word.english }}</h5>
+                                        <p class="card-text">{{ word.chinese }}</p>
+                                        <span class="category-badge" v-if="word.category">{{ word.category }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <nav class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item" :class="{ disabled: currentPresetPage === 1 }">
+                                    <a class="page-link" href="#" @click.prevent="changePage('home', currentPresetPage - 1)">上一页</a>
+                                </li>
+                                <li class="page-item" v-for="page in presetTotalPages" :key="page" :class="{ active: currentPresetPage === page }">
+                                    <a class="page-link" href="#" @click.prevent="changePage('home', page)">{{ page }}</a>
+                                </li>
+                                <li class="page-item" :class="{ disabled: currentPresetPage === presetTotalPages }">
+                                    <a class="page-link" href="#" @click.prevent="changePage('home', currentPresetPage + 1)">下一页</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+
+                    <!-- 上传单词页面 -->
+                    <div v-if="currentPage === 'upload'">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">上传新单词</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-success" v-if="uploadSuccess">{{ uploadSuccess }}</div>
+                                <div class="alert alert-danger" v-if="uploadError">{{ uploadError }}</div>
+                                <form @submit.prevent="uploadWord">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="english" class="form-label">英文单词</label>
+                                                <input type="text" class="form-control" id="english" v-model="uploadForm.english" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="chinese" class="form-label">中文翻译</label>
+                                                <input type="text" class="form-control" id="chinese" v-model="uploadForm.chinese" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="image" class="form-label">图片</label>
+                                                <input type="file" class="form-control" id="image" @change="previewImage" accept="image/*" required>
+                                                <img v-if="imagePreview" :src="imagePreview" class="upload-preview">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="audio" class="form-label">音频（可选）</label>
+                                                <input type="file" class="form-control" id="audio" @change="previewAudio" accept="audio/*">
+                                                <audio v-if="audioPreview" controls class="audio-control mt-2">
+                                                    <source :src="audioPreview">
+                                                </audio>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="card mb-3">
+                                                <div class="card-header">预览</div>
+                                                <div class="card-body text-center">
+                                                    <img v-if="imagePreview" :src="imagePreview" class="img-fluid mb-3" style="max-height: 200px;">
+                                                    <h4>{{ uploadForm.english || '英文单词' }}</h4>
+                                                    <p>{{ uploadForm.chinese || '中文翻译' }}</p>
+                                                    <audio v-if="audioPreview" controls class="audio-control">
+                                                        <source :src="audioPreview">
+                                                    </audio>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary" :disabled="isUploading">
+                                        <span v-if="isUploading">上传中...</span>
+                                        <span v-else>上传单词</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 我的单词页面 -->
+                    <div v-if="currentPage === 'mywords'">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2>我的单词</h2>
+                            <button class="btn btn-outline-primary" @click="loadUserWords">刷新</button>
+                        </div>
+
+                        <div class="alert alert-info" v-if="userWords.length === 0">
+                            您还没有上传任何单词，请前往"上传单词"页面添加。
+                        </div>
+
+                        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+                            <div class="col" v-for="word in userWords" :key="word.id">
+                                <div class="card word-card">
+                                    <img :src="getImageUrl(word.image_path)" class="card-img-top word-image" :alt="word.english">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ word.english }}</h5>
+                                        <p class="card-text">{{ word.chinese }}</p>
+                                        <div class="d-flex justify-content-between">
+                                            <button class="btn btn-sm btn-outline-primary" @click="playAudio(word)">
+                                                <i class="bi bi-volume-up"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" @click="deleteWord(word.id)">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <nav class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item" :class="{ disabled: currentUserWordsPage === 1 }">
+                                    <a class="page-link" href="#" @click.prevent="changePage('mywords', currentUserWordsPage - 1)">上一页</a>
+                                </li>
+                                <li class="page-item" v-for="page in userWordsTotalPages" :key="page" :class="{ active: currentUserWordsPage === page }">
+                                    <a class="page-link" href="#" @click.prevent="changePage('mywords', page)">{{ page }}</a>
+                                </li>
+                                <li class="page-item" :class="{ disabled: currentUserWordsPage === userWordsTotalPages }">
+                                    <a class="page-link" href="#" @click.prevent="changePage('mywords', currentUserWordsPage + 1)">下一页</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+
+                    <!-- 测验页面 -->
+                    <div v-if="currentPage === 'quiz'">
+                        <div class="card quiz-card">
+                            <div class="card-header">
+                                <h5 class="mb-0">英语测验</h5>
+                            </div>
+                            <div class="card-body">
+                                <div v-if="!quizStarted && !quizCompleted">
+                                    <h4 class="mb-4">选择测验类型</h4>
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="quizType" id="imageToEnglish" value="image_to_english" v-model="quizSettings.type">
+                                            <label class="form-check-label" for="imageToEnglish">
+                                                看图写英文
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="quizType" id="chineseToEnglish" value="chinese_to_english" v-model="quizSettings.type">
+                                            <label class="form-check-label" for="chineseToEnglish">
+                                                看中文写英文
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="questionCount" class="form-label">题目数量</label>
+                                        <select class="form-select" id="questionCount" v-model="quizSettings.count">
+                                            <option value="5">5题</option>
+                                            <option value="10">10题</option>
+                                            <option value="15">15题</option>
+                                            <option value="20">20题</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="useUserWords" v-model="quizSettings.useUserWords">
+                                            <label class="form-check-label" for="useUserWords">
+                                                包含我上传的单词
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-primary" @click="startQuiz">开始测验</button>
+                                </div>
+
+                                <div v-if="quizStarted && !quizCompleted">
+                                    <div class="progress mb-4">
+                                        <div class="progress-bar" :style="{ width: (currentQuestionIndex / quizQuestions.length * 100) + '%' }"></div>
+                                    </div>
+                                    <h4 class="mb-3">问题 {{ currentQuestionIndex + 1 }}/{{ quizQuestions.length }}</h4>
+                                    
+                                    <div v-if="currentQuestion.question_type === 'image_to_english'">
+                                        <div class="text-center mb-3">
+                                            <img :src="getImageUrl(currentQuestion.image_path)" class="quiz-image">
+                                        </div>
+                                        <p class="mb-3">请输入图片对应的英文单词：</p>
+                                    </div>
+                                    
+                                    <div v-if="currentQuestion.question_type === 'chinese_to_english'">
+                                        <div class="text-center mb-3">
+                                            <h3>{{ currentQuestion.chinese }}</h3>
+                                        </div>
+                                        <p class="mb-3">请输入对应的英文单词：</p>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <input type="text" class="form-control" v-model="userAnswer" @keyup.enter="submitAnswer">
+                                    </div>
+                                    
+                                    <button class="btn btn-primary" @click="submitAnswer">提交答案</button>
+                                </div>
+
+                                <div v-if="quizCompleted">
+                                    <h4 class="mb-4">测验完成！</h4>
+                                    <div class="text-center mb-4">
+                                        <div class="display-4">{{ quizScore }}/{{ quizQuestions.length }}</div>
+                                        <p>正确率: {{ Math.round(quizScore / quizQuestions.length * 100) }}%</p>
+                                    </div>
+                                    
+                                    <h5 class="mb-3">答题详情：</h5>
+                                    <div v-for="(question, index) in quizQuestions" :key="index" class="card mb-2 result-card" :class="{ 'correct': quizAnswers[index].isCorrect, 'incorrect': !quizAnswers[index].isCorrect }">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between">
+                                                <div>
+                                                    <p class="mb-1">
+                                                        <strong>问题 {{ index + 1 }}:</strong> 
+                                                        <span v-if="question.question_type === 'image_to_english'">
+                                                            <img :src="getImageUrl(question.image_path)" style="height: 50px; width: auto;">
+                                                        </span>
+                                                        <span v-else>{{ question.chinese }}</span>
+                                                    </p>
+                                                    <p class="mb-1"><strong>正确答案:</strong> {{ question.answer }}</p>
+                                                    <p class="mb-0"><strong>您的答案:</strong> {{ quizAnswers[index].userAnswer }}</p>
+                                                </div>
+                                                <div>
+                                                    <span class="badge bg-success" v-if="quizAnswers[index].isCorrect">正确</span>
+                                                    <span class="badge bg-danger" v-else>错误</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between mt-4">
+                                        <button class="btn btn-primary" @click="resetQuiz">再来一次</button>
+                                        <button class="btn btn-outline-primary" @click="changePage('history')">查看历史记录</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 测验历史页面 -->
+                    <div v-if="currentPage === 'history'">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2>测验历史</h2>
+                            <button class="btn btn-outline-primary" @click="loadQuizHistory">刷新</button>
+                        </div>
+
+                        <div class="alert alert-info" v-if="quizHistory.length === 0">
+                            您还没有测验记录，请前往"测验"页面进行测验。
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>日期</th>
+                                        <th>测验类型</th>
+                                        <th>分数</th>
+                                        <th>正确率</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="result in quizHistory" :key="result.id">
+                                        <td>{{ formatDate(result.created_at) }}</td>
+                                        <td>{{ formatQuizType(result.quiz_type) }}</td>
+                                        <td>{{ result.score }}/{{ result.total_questions }}</td>
+                                        <td>
+                                            <div class="progress">
+                                                <div class="progress-bar" :class="getProgressBarClass(result.percentage)" 
+                                                    :style="{ width: result.percentage + '%' }">
+                                                    {{ Math.round(result.percentage) }}%
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <nav class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item" :class="{ disabled: currentHistoryPage === 1 }">
+                                    <a class="page-link" href="#" @click.prevent="changePage('history', currentHistoryPage - 1)">上一页</a>
+                                </li>
+                                <li class="page-item" v-for="page in historyTotalPages" :key="page" :class="{ active: currentHistoryPage === page }">
+                                    <a class="page-link" href="#" @click.prevent="changePage('history', page)">{{ page }}</a>
+                                </li>
+                                <li class="page-item" :class="{ disabled: currentHistoryPage === historyTotalPages }">
+                                    <a class="page-link" href="#" @click.prevent="changePage('history', currentHistoryPage + 1)">下一页</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.2.36/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        const { createApp, ref, reactive, onMounted, computed } = Vue;
+        
+        const app = createApp({
+            setup() {
+                // 基础状态
+                const currentPage = ref('home');
+                const isLoggedIn = ref(false);
+                const currentUser = ref({});
+                const apiBaseUrl = '/api';
+                
+                // 登录相关
+                const loginForm = reactive({
+                    username: '',
+                    password: ''
+                });
+                const loginError = ref('');
+                
+                // 注册相关
+                const registerForm = reactive({
+                    username: '',
+                    email: '',
+                    password: '',
+                    confirmPassword: ''
+                });
+                const registerError = ref('');
+                
+                // 预设单词相关
+                const presetWords = ref([]);
+                const currentPresetPage = ref(1);
+                const presetTotalPages = ref(1);
+                const selectedCategory = ref('');
+                
+                // 用户单词相关
+                const userWords = ref([]);
+                const currentUserWordsPage = ref(1);
+                const userWordsTotalPages = ref(1);
+                
+                // 上传单词相关
+                const uploadForm = reactive({
+                    english: '',
+                    chinese: '',
+                    image: null,
+                    audio: null
+                });
+                const imagePreview = ref('');
+                const audioPreview = ref('');
+                const uploadSuccess = ref('');
+                const uploadError = ref('');
+                const isUploading = ref(false);
+                
+                // 测验相关
+                const quizSettings = reactive({
+                    type: 'image_to_english',
+                    count: 10,
+                    useUserWords: false
+                });
+                const quizStarted = ref(false);
+                const quizCompleted = ref(false);
+                const quizQuestions = ref([]);
+                const currentQuestionIndex = ref(0);
+                const userAnswer = ref('');
+                const quizAnswers = ref([]);
+                const quizScore = ref(0);
+                
+                // 测验历史相关
+                const quizHistory = ref([]);
+                const currentHistoryPage = ref(1);
+                const historyTotalPages = ref(1);
+                
+                // 初始化
+                onMounted(() => {
+                    checkAuth();
+                    loadPresetWords();
+                });
+                
+                // 检查认证状态
+                const checkAuth = () => {
+                    const token = localStorage.getItem('token');
+                    if (token) {
+                        const userData = JSON.parse(localStorage.getItem('user') || '{}');
+                        currentUser.value = userData;
+                        isLoggedIn.value = true;
+                        
+                        // 验证令牌有效性
+                        axios.get(`${apiBaseUrl}/user/profile`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                        }).catch(() => {
+                            logout();
+                        });
+                    } else {
+                        isLoggedIn.value = false;
+                    }
+                };
+                
+                // 页面切换
+                const changePage = (page, pageNum) => {
+                    if (page === 'upload' || page === 'mywords' || page === 'quiz' || page === 'history') {
+                        if (!isLoggedIn.value) {
+                            showLogin();
+                            return;
+                        }
+                    }
+                    
+                    if (page === 'home') {
+                        if (pageNum) {
+                            currentPresetPage.value = pageNum;
+                        }
+                        loadPresetWords();
+                    } else if (page === 'mywords') {
+                        if (pageNum) {
+                            currentUserWordsPage.value = pageNum;
+                        }
+                        loadUserWords();
+                    } else if (page === 'history') {
+                        if (pageNum) {
+                            currentHistoryPage.value = pageNum;
+                        }
+                        loadQuizHistory();
+                    }
+                    
+                    currentPage.value = page;
+                };
+                
+                // 显示登录页面
+                const showLogin = () => {
+                    loginError.value = '';
+                    loginForm.username = '';
+                    loginForm.password = '';
+                    currentPage.value = 'login';
+                };
+                
+                // 显示注册页面
+                const showRegister = () => {
+                    registerError.value = '';
+                    registerForm.username = '';
+                    registerForm.email = '';
+                    registerForm.password = '';
+                    registerForm.confirmPassword = '';
+                    currentPage.value = 'register';
+                };
+                
+                // 登录
+                const login = async () => {
+                    try {
+                        loginError.value = '';
+                        const response = await axios.post(`${apiBaseUrl}/user/login`, {
+                            username: loginForm.username,
+                            password: loginForm.password
+                        });
+                        
+                        const { token, user_id, username } = response.data;
+                        localStorage.setItem('token', token);
+                        localStorage.setItem('user', JSON.stringify({ id: user_id, username }));
+                        
+                        currentUser.value = { id: user_id, username };
+                        isLoggedIn.value = true;
+                        currentPage.value = 'home';
+                    } catch (error) {
+                        loginError.value = error.response?.data?.message || '登录失败，请检查用户名和密码';
+                    }
+                };
+                
+                // 注册
+                const register = async () => {
+                    try {
+                        registerError.value = '';
+                        
+                        if (registerForm.password !== registerForm.confirmPassword) {
+                            registerError.value = '两次输入的密码不一致';
+                            return;
+                        }
+                        
+                        await axios.post(`${apiBaseUrl}/user/register`, {
+                            username: registerForm.username,
+                            email: registerForm.email,
+                            password: registerForm.password
+                        });
+                        
+                        // 注册成功后自动登录
+                        await login({ username: registerForm.username, password: registerForm.password });
+                        currentPage.value = 'home';
+                    } catch (error) {
+                        registerError.value = error.response?.data?.message || '注册失败，请稍后再试';
+                    }
+                };
+                
+                // 退出登录
+                const logout = () => {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    isLoggedIn.value = false;
+                    currentUser.value = {};
+                    currentPage.value = 'home';
+                };
+                
+                // 加载预设单词
+                const loadPresetWords = async () => {
+                    try {
+                        const params = {
+                            page: currentPresetPage.value,
+                            per_page: 12
+                        };
+                        
+                        if (selectedCategory.value) {
+                            params.category = selectedCategory.value;
+                        }
+                        
+                        const response = await axios.get(`${apiBaseUrl}/word/preset`, { params });
+                        presetWords.value = response.data.words;
+                        presetTotalPages.value = response.data.pages;
+                    } catch (error) {
+                        console.error('加载预设单词失败', error);
+                    }
+                };
+                
+                // 加载用户单词
+                const loadUserWords = async () => {
+                    if (!isLoggedIn.value) return;
+                    
+                    try {
+                        const token = localStorage.getItem('token');
+                        const response = await axios.get(`${apiBaseUrl}/word/user`, {
+                            headers: { Authorization: `Bearer ${token}` },
+                            params: {
+                                page: currentUserWordsPage.value,
+                                per_page: 12
+                            }
+                        });
+                        
+                        userWords.value = response.data.words;
+                        userWordsTotalPages.value = response.data.pages;
+                    } catch (error) {
+                        console.error('加载用户单词失败', error);
+                    }
+                };
+                
+                // 预览图片
+                const previewImage = (event) => {
+                    const file = event.target.files[0];
+                    if (file) {
+                        uploadForm.image = file;
+                        imagePreview.value = URL.createObjectURL(file);
+                    }
+                };
+                
+                // 预览音频
+                const previewAudio = (event) => {
+                    const file = event.target.files[0];
+                    if (file) {
+                        uploadForm.audio = file;
+                        audioPreview.value = URL.createObjectURL(file);
+                    }
+                };
+                
+                // 上传单词
+                const uploadWord = async () => {
+                    if (!isLoggedIn.value) return;
+                    
+                    try {
+                        isUploading.value = true;
+                        uploadError.value = '';
+                        uploadSuccess.value = '';
+                        
+                        const formData = new FormData();
+                        formData.append('english', uploadForm.english);
+                        formData.append('chinese', uploadForm.chinese);
+                        formData.append('image', uploadForm.image);
+                        
+                        if (uploadForm.audio) {
+                            formData.append('audio', uploadForm.audio);
+                        }
+                        
+                        const token = localStorage.getItem('token');
+                        const response = await axios.post(`${apiBaseUrl}/word/upload`, formData, {
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'multipart/form-data'
+                            }
+                        });
+                        
+                        uploadSuccess.value = '单词上传成功！';
+                        uploadForm.english = '';
+                        uploadForm.chinese = '';
+                        uploadForm.image = null;
+                        uploadForm.audio = null;
+                        imagePreview.value = '';
+                        audioPreview.value = '';
+                        
+                        // 重置文件输入框
+                        document.getElementById('image').value = '';
+                        document.getElementById('audio').value = '';
+                    } catch (error) {
+                        uploadError.value = error.response?.data?.message || '上传失败，请稍后再试';
+                    } finally {
+                        isUploading.value = false;
+                    }
+                };
+                
+                // 删除单词
+                const deleteWord = async (wordId) => {
+                    if (!isLoggedIn.value) return;
+                    
+                    if (!confirm('确定要删除这个单词吗？')) {
+                        return;
+                    }
+                    
+                    try {
+                        const token = localStorage.getItem('token');
+                        await axios.delete(`${apiBaseUrl}/word/user/${wordId}`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                        });
+                        
+                        // 重新加载用户单词
+                        loadUserWords();
+                    } catch (error) {
+                        console.error('删除单词失败', error);
+                        alert('删除单词失败，请稍后再试');
+                    }
+                };
+                
+                // 开始测验
+                const startQuiz = async () => {
+                    if (!isLoggedIn.value) return;
+                    
+                    try {
+                        const token = localStorage.getItem('token');
+                        const response = await axios.get(`${apiBaseUrl}/quiz/generate`, {
+                            headers: { Authorization: `Bearer ${token}` },
+                            params: {
+                                type: quizSettings.type,
+                                count: quizSettings.count,
+                                use_user_words: quizSettings.useUserWords
+                            }
+                        });
+                        
+                        quizQuestions.value = response.data.questions;
+                        currentQuestionIndex.value = 0;
+                        quizAnswers.value = [];
+                        quizScore.value = 0;
+                        userAnswer.value = '';
+                        quizStarted.value = true;
+                        quizCompleted.value = false;
+                    } catch (error) {
+                        console.error('获取测验题目失败', error);
+                        alert('获取测验题目失败，请稍后再试');
+                    }
+                };
+                
+                // 提交答案
+                const submitAnswer = () => {
+                    if (!quizStarted.value || quizCompleted.value) return;
+                    
+                    const currentQuestion = quizQuestions.value[currentQuestionIndex.value];
+                    const isCorrect = userAnswer.value.toLowerCase().trim() === currentQuestion.answer.toLowerCase().trim();
+                    
+                    quizAnswers.value.push({
+                        questionId: currentQuestion.id,
+                        userAnswer: userAnswer.value,
+                        correctAnswer: currentQuestion.answer,
+                        isCorrect
+                    });
+                    
+                    if (isCorrect) {
+                        quizScore.value++;
+                    }
+                    
+                    userAnswer.value = '';
+                    
+                    if (currentQuestionIndex.value < quizQuestions.value.length - 1) {
+                        currentQuestionIndex.value++;
+                    } else {
+                        completeQuiz();
+                    }
+                };
+                
+                // 完成测验
+                const completeQuiz = async () => {
+                    quizCompleted.value = true;
+                    quizStarted.value = false;
+                    
+                    try {
+                        const token = localStorage.getItem('token');
+                        await axios.post(`${apiBaseUrl}/quiz/submit`, {
+                            quiz_type: quizSettings.type,
+                            score: quizScore.value,
+                            total_questions: quizQuestions.value.length
+                        }, {
+                            headers: { Authorization: `Bearer ${token}` }
+                        });
+                    } catch (error) {
+                        console.error('保存测验结果失败', error);
+                    }
+                };
+                
+                // 重置测验
+                const resetQuiz = () => {
+                    quizStarted.value = false;
+                    quizCompleted.value = false;
+                    quizQuestions.value = [];
+                    quizAnswers.value = [];
+                    currentQuestionIndex.value = 0;
+                    quizScore.value = 0;
+                    userAnswer.value = '';
+                };
+                
+                // 加载测验历史
+                const loadQuizHistory = async () => {
+                    if (!isLoggedIn.value) return;
+                    
+                    try {
+                        const token = localStorage.getItem('token');
+                        const response = await axios.get(`${apiBaseUrl}/quiz/history`, {
+                            headers: { Authorization: `Bearer ${token}` },
+                            params: {
+                                page: currentHistoryPage.value,
+                                per_page: 10
+                            }
+                        });
+                        
+                        quizHistory.value = response.data.results;
+                        historyTotalPages.value = response.data.pages;
+                    } catch (error) {
+                        console.error('加载测验历史失败', error);
+                    }
+                };
+                
+                // 格式化日期
+                const formatDate = (dateString) => {
+                    const date = new Date(dateString);
+                    return date.toLocaleString('zh-CN');
+                };
+                
+                // 格式化测验类型
+                const formatQuizType = (type) => {
+                    return type === 'image_to_english' ? '看图写英文' : '看中文写英文';
+                };
+                
+                // 获取进度条样式
+                const getProgressBarClass = (percentage) => {
+                    if (percentage >= 80) return 'bg-success';
+                    if (percentage >= 60) return 'bg-info';
+                    if (percentage >= 40) return 'bg-warning';
+                    return 'bg-danger';
+                };
+                
+                // 获取图片URL
+                const getImageUrl = (path) => {
+                    if (!path) return 'https://via.placeholder.com/150';
+                    if (path.startsWith('http')) return path;
+                    return path;
+                };
+                
+                // 播放音频
+                const playAudio = (word) => {
+                    if (!word.audio_path) return;
+                    
+                    const audio = new Audio(getImageUrl(word.audio_path));
+                    audio.play();
+                };
+                
+                // 计算当前问题
+                const currentQuestion = computed(() => {
+                    if (!quizQuestions.value.length) return null;
+                    return quizQuestions.value[currentQuestionIndex.value];
+                });
+                
+                return {
+                    // 基础状态
+                    currentPage,
+                    isLoggedIn,
+                    currentUser,
+                    
+                    // 登录相关
+                    loginForm,
+                    loginError,
+                    showLogin,
+                    login,
+                    
+                    // 注册相关
+                    registerForm,
+                    registerError,
+                    showRegister,
+                    register,
+                    logout,
+                    
+                    // 页面导航
+                    changePage,
+                    
+                    // 预设单词相关
+                    presetWords,
+                    currentPresetPage,
+                    presetTotalPages,
+                    selectedCategory,
+                    loadPresetWords,
+                    
+                    // 用户单词相关
+                    userWords,
+                    currentUserWordsPage,
+                    userWordsTotalPages,
+                    loadUserWords,
+                    deleteWord,
+                    
+                    // 上传单词相关
+                    uploadForm,
+                    imagePreview,
+                    audioPreview,
+                    uploadSuccess,
+                    uploadError,
+                    isUploading,
+                    previewImage,
+                    previewAudio,
+                    uploadWord,
+                    
+                    // 测验相关
+                    quizSettings,
+                    quizStarted,
+                    quizCompleted,
+                    quizQuestions,
+                    currentQuestionIndex,
+                    currentQuestion,
+                    userAnswer,
+                    quizAnswers,
+                    quizScore,
+                    startQuiz,
+                    submitAnswer,
+                    resetQuiz,
+                    
+                    // 测验历史相关
+                    quizHistory,
+                    currentHistoryPage,
+                    historyTotalPages,
+                    loadQuizHistory,
+                    formatDate,
+                    formatQuizType,
+                    getProgressBarClass,
+                    
+                    // 工具函数
+                    getImageUrl,
+                    playAudio
+                };
+            }
+        });
+        
+        app.mount('#app');
+    </script>
+</body>
+</html>
